@@ -11,19 +11,22 @@ server.listen(3000, function(){
     console.log('server started on port 3000');
 });
 
-process.on('SIGINT', () => {
-    wss.clients.forEach(function each(client) {
-        client.close();
-    });
-    server.close(() => {
-        shutdownDB();
-    });
-});
-
 /** Begin websockets */
 const WebSocketServer = require('ws').Server;
 
 const wss = new WebSocketServer({server: server});
+
+process.on('SIGINT', () => {
+    console.log('sigint');
+    
+    wss.clients.forEach(function each(client) {
+        client.close();
+    });
+    server.closeAllConnections();
+    server.close(() => {
+        shutdownDB();
+    });
+});
 
 wss.on('connection', function connection(ws){
     const numClients = wss.clients.size;
@@ -71,7 +74,8 @@ function getCounts() {
 }
 
 function shutdownDB() {
-    getCounts();
     console.log("Shutting down db");
+
+    getCounts();
     db.close();
 }
